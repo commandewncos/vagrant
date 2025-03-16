@@ -1,26 +1,38 @@
 Vagrant.configure("2") do |config|
-  config.vm.provision "shell", inline: <<-SHELL
+
+  config.vm.provision :shell, inline: <<-SHELL
     apt-get update
+    apt-get install python3
   SHELL
-  # control plan
+ 
   config.vm.define :control do |control|
     control.vm.box = "ubuntu/bionic64"
     control.vm.box_version = "20230607.0.5"
-    control.vm.provider "virtualbox"
-    control.vm.network "private_network", ip: "192.168.56.30"
+    # setup memory with 2GB (2048) and 2 vcpus
+    control.vm.provider "virtualbox" do |virtualbox|
+      virtualbox.cpus = 2
+      virtualbox.memory = 2048
+    end
+    # control.vm.network "private_network", ip: "192.168.56.30"
+    control.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.30"
+    control.vm.provision :ansible_local do |ansible|
+      ansible.playbook = "ubuntu.yaml"
+      ansible.verbose = "-vvv"
+    end
   end
-  # worker 1
-  config.vm.define :worker1 do |worker1|
-    worker1.vm.box = "ubuntu/bionic64"
-    worker1.vm.box_version = "20230607.0.5"
-    worker1.vm.provider "virtualbox"
-    worker1.vm.network "private_network", ip: "192.168.56.31"
-  end
-  # worker 2
-  config.vm.define :worker2 do |worker2|
-    worker2.vm.box = "ubuntu/bionic64"
-    worker2.vm.box_version = "20230607.0.5"
-    worker2.vm.provider "virtualbox"
-    worker2.vm.network "private_network", ip: "192.168.56.32"
+
+  # for each machine
+  (1..2).each do |machine|
+    config.vm.define "worker#{machine}" do |worker|
+      worker.vm.box = "ubuntu/bionic64"
+      worker.vm.box_version = "20230607.0.5"
+      # setup memory with 1GB (2048) and 1 vcpus
+      worker.vm.provider "virtualbox" do |virtualbox|
+        virtualbox.cpus = 1
+        virtualbox.memory = 1024
+      end
+      # worker.vm.network "private_network", ip: "192.168.56.3#{machine}"
+      worker.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.3#{machine}"
+    end
   end
 end

@@ -1,2 +1,3 @@
 ubuntu/.vagrant/*
 ubuntu/*.log
+ubuntu/.ansible/*

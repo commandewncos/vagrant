@@ -1,0 +1,11 @@
+- name: update packages with cahe
+  hosts: all
+  gather_facts: false
+  become: true
+
+  tasks:
+  - name: update respositories
+    ansible.builtin.apt:
+      update_cache: yes
+      state: latest
+    become: true
