@@ -2,45 +2,46 @@ Vagrant.configure("2") do |config|
 
   config.vm.provision :file, source: "./hosts", destination: "/tmp/"
   config.vm.provision :shell, inline: "mv /tmp/hosts /etc/"
-  config.vm.provision :shell, path: "docker.sh"
-  
-  
-  config.vm.provision :shell, inline: <<-SHELL
-    sudo swapoff --all
-  SHELL
-  
-  # config.vm.provision :ansible_local do |ansible|
-  #   ansible.playbook = "ubuntu.yaml"
-  #   ansible.verbose = "-vvv"
-  # end
+  config.vm.provision :shell, path: "common.sh"
 
   # control plane
   config.vm.define :control do |control|
-    control.vm.box = "ubuntu/bionic64"
-    control.vm.box_version = "20230607.0.5"
-    # setup memory with 2GB (2048) and 2 vcpus
+    control.vm.box = "bento/ubuntu-22.04"
+    control.vm.box_version = "202502.21.0"
+    control.vm.hostname = "control"
+
     control.vm.provider "virtualbox" do |virtualbox|
       virtualbox.cpus = 2
       virtualbox.memory = 2048
     end
-    # control.vm.network "private_network", ip: "192.168.56.30"
-    control.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.30"
 
-    control.vm.provision :shell, path: "control.sh"
+    control.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.30"
+    # control.vm.network :private_network, ip: "192.168.56.30"
+    control.ssh.insert_key = false
+    control.ssh.private_key_path = ['~/.vagrant.d/insecure_private_key', '~/.ssh/id_rsa']
+    control.vm.provision :file, source: "~/.vagrant.d/insecure_private_key", destination: "~/.ssh/id_rsa"
+    control.vm.provision :shell, inline: <<-SHELL
+      sudo kubeadm config images pull
+      sudo kubeadm init --apiserver-advertise-address "192.168.100.30" \
+        --pod-network-cidr="192.168.0.0/16"
+    SHELL
   end
 
   # for each machine
   (1..2).each do |machine|
-    config.vm.define "worker#{machine}" do |worker|
-      worker.vm.box = "ubuntu/bionic64"
-      worker.vm.box_version = "20230607.0.5"
-      # setup memory with 1GB (2048) and 1 vcpus
-      worker.vm.provider "virtualbox" do |virtualbox|
+    config.vm.define "node#{machine}" do |node|
+      node.vm.box = "bento/ubuntu-22.04"
+      node.vm.box_version = "202502.21.0"
+      node.vm.hostname = "node#{machine}"
+      node.vm.provider "virtualbox" do |virtualbox|
         virtualbox.cpus = 1
-        virtualbox.memory = 1024
+        virtualbox.memory = 2048
       end
-      # worker.vm.network "private_network", ip: "192.168.56.3#{machine}"
-      worker.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.3#{machine}"
+      node.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.3#{machine}"
+      # node.vm.network :private_network, ip: "192.168.56.3#{machine}"
+      node.ssh.insert_key = false
+      node.ssh.private_key_path = ['~/.vagrant.d/insecure_private_key', '~/.ssh/id_rsa']
+      node.vm.provision :file, source: "~/.vagrant.d/insecure_private_key", destination: "~/.ssh/id_rsa"
     end
   end
 end
