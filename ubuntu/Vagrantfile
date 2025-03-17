@@ -1,10 +1,20 @@
 Vagrant.configure("2") do |config|
 
+  config.vm.provision :file, source: "./hosts", destination: "/tmp/"
+  config.vm.provision :shell, inline: "mv /tmp/hosts /etc/"
+  config.vm.provision :shell, path: "docker.sh"
+  
+  
   config.vm.provision :shell, inline: <<-SHELL
-    apt-get update
-    apt-get install python3
+    sudo swapoff --all
   SHELL
- 
+  
+  # config.vm.provision :ansible_local do |ansible|
+  #   ansible.playbook = "ubuntu.yaml"
+  #   ansible.verbose = "-vvv"
+  # end
+
+  # control plane
   config.vm.define :control do |control|
     control.vm.box = "ubuntu/bionic64"
     control.vm.box_version = "20230607.0.5"
@@ -15,10 +25,8 @@ Vagrant.configure("2") do |config|
     end
     # control.vm.network "private_network", ip: "192.168.56.30"
     control.vm.network "public_network", bridge: "wlp1s0", ip: "192.168.100.30"
-    control.vm.provision :ansible_local do |ansible|
-      ansible.playbook = "ubuntu.yaml"
-      ansible.verbose = "-vvv"
-    end
+
+    control.vm.provision :shell, path: "control.sh"
   end
 
   # for each machine
