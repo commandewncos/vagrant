@@ -1,8 +1,8 @@
 127.0.0.1       localhost
 127.0.1.1       ubuntu-bionic   ubuntu-bionic
-192.168.100.30  master.asf.com master
-192.168.100.31  worker1.asf.com worker1
-192.168.100.32  worker2.asf.com worker2
+192.168.56.30  control.example.com control
+192.168.56.31  node1.example.com node1
+192.168.56.32  node2.example.com node2
 
 # The following lines are desirable for IPv6 capable hosts
 ::1     ip6-localhost   ip6-loopback
