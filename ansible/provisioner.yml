@@ -1,0 +1,17 @@
+---
+
+- name: updatea
+  hosts: wordpress
+  become: true
+  tasks:
+   - name: update
+     ansible.builtin.apt:
+      update_cache: yes
+   - name: packages install
+     ansible.builtin.apt:
+      package:
+        - curl
+        - net-tools
+      state: latest
+      update_cache: yes
+     become: true 

@@ -1,0 +1,12 @@
+Vagrant.configure("2") do |conf|
+  conf.vm.define :centos8 do |control|
+    control.vm.box = "centos/8"
+    control.vm.box_version = "2011.0"
+    control.vm.hostname = "control"
+    control.vm.provider :virtualbox do |virtualbox|
+      virtualbox.cpus = 2
+      virtualbox.memory = 2048
+    end
+    control.vm.network :public_network, bridge: "wlp1s0", ip: "192.168.100.7"
+  end
+end
